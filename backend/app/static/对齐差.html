@@ -20,6 +20,7 @@
           <a href="/对齐差.html" class="亮">对齐差表</a>
           <a href="/悬账单.html">悬账单</a>
           <a href="/对拍结论.html">对拍结论</a>
+          <a href="/幂等.html">幂等账册</a>
           <a href="/源登记.html">源登记</a>
           <a href="/轨规.html">轨规</a>
       </nav>
@@ -28,7 +29,8 @@
 
       <section class="行卡">
         <h1>对齐差表</h1>
-        <p class="说明">按业务键汇总左右金额。差型：对齐 / 金额不符 / 左缺 / 右缺。跑对齐会重算并重写悬账单。</p>
+        <p class="说明">按业务键汇总左右金额。差型：对齐 / 金额不符 / 左缺 / 右缺。跑对齐会重算并重写悬账单。二次同号被幂等拒收的事件不进现行流水，故不在此产生差行。</p>
+        <div id="水位"></div>
         <div class="工具条">
           <button id="跑">跑对齐</button>
           <button class="次" id="刷">刷新</button>
@@ -51,12 +53,14 @@
         <td>${徽(r.差型)}</td><td>${r.说明}</td><td>${r.时刻}</td>`
     );
   };
+  const paint水位 = async () => { document.getElementById("水位").innerHTML = await 幂等水位条(); };
+  await paint水位();
   await paint();
   document.getElementById("跑").onclick = async () => {
     document.getElementById("报").textContent = JSON.stringify(await post("/api/对齐/跑"), null, 2);
-    await paint();
+    await paint水位(); await paint();
   };
-  document.getElementById("刷").onclick = paint;
+  document.getElementById("刷").onclick = async () => { await paint水位(); await paint(); };
 })();
 </script>
 </body>

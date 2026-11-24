@@ -20,6 +20,7 @@
           <a href="/对齐差.html">对齐差表</a>
           <a href="/悬账单.html" class="亮">悬账单</a>
           <a href="/对拍结论.html">对拍结论</a>
+          <a href="/幂等.html">幂等账册</a>
           <a href="/源登记.html">源登记</a>
           <a href="/轨规.html">轨规</a>
       </nav>
@@ -28,7 +29,8 @@
 
       <section class="行卡">
         <h1>悬账单</h1>
-        <p class="说明">对齐后仅单边有键（或需人工处理）的业务键。不是闸对/缝包那种「旁路匣」命名。</p>
+        <p class="说明">对齐后仅单边有键（或需人工处理）的业务键。不是闸对/缝包那种「旁路匣」命名。被幂等拒收的同号事件不入现行流水，不会凭空生成悬账。</p>
+        <div id="水位"></div>
         <div class="工具条"><button class="次" id="刷">刷新</button></div>
       </section>
       <section class="行卡"><div id="表"></div></section>
@@ -47,8 +49,10 @@
         <td>${r.事件编号||"-"}</td><td>${r.原因}</td><td>${r.时刻}</td>`
     );
   };
+  const paint水位 = async () => { document.getElementById("水位").innerHTML = await 幂等水位条(); };
+  await paint水位();
   await paint();
-  document.getElementById("刷").onclick = paint;
+  document.getElementById("刷").onclick = async () => { await paint水位(); await paint(); };
 })();
 </script>
 </body>

@@ -54,6 +54,7 @@ def 结论列表() -> list[dict]:
     return [dict(r) for r in rows]
 
 def 概览() -> dict:
+    from app.services import 幂等
     conn = 连接()
     g = 轨规()
     out = {
@@ -68,4 +69,5 @@ def 概览() -> dict:
         "结论数": conn.execute("SELECT COUNT(*) AS c FROM 对拍结论").fetchone()["c"],
     }
     conn.close()
+    out.update(幂等.账册水位())
     return out

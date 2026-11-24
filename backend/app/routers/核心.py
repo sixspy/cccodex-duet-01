@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from app.services import 目录, 左装载, 右装载, 对齐, 结论, 夹具, 统计, 说明
+from app.services import 目录, 左装载, 右装载, 对齐, 结论, 夹具, 统计, 说明, 幂等
 
 路由 = APIRouter()
 
@@ -65,6 +65,23 @@ def api_右夹(名: str):
     except FileNotFoundError:
         raise HTTPException(404, 名)
 
+# 固定路径 + body 传夹具名：规避根静态 Mount 对带路径参数 POST 的 405
+@路由.post("/api/左轨/夹具装")
+def api_左夹装(体: dict):
+    名 = 体.get("夹具名")
+    try:
+        return 左装载.装一批(夹具.读取(名))
+    except FileNotFoundError:
+        raise HTTPException(404, 名)
+
+@路由.post("/api/右轨/夹具装")
+def api_右夹装(体: dict):
+    名 = 体.get("夹具名")
+    try:
+        return 右装载.装一批(夹具.读取(名))
+    except FileNotFoundError:
+        raise HTTPException(404, 名)
+
 @路由.post("/api/对齐/跑")
 def api_对齐():
     return 对齐.跑对齐()
@@ -95,14 +112,39 @@ def api_悬边():
 def api_仓情():
     return 说明.仓情()
 
+
+@路由.get("/api/幂等/查")
+def api_幂等查(事件编号: str, 轨别: str | None = None):
+    """幂等只读接口：事件编号、轨别、拒因或归档键、形态标记、valid。"""
+    return 幂等.只读查询(事件编号, 轨别)
+
+@路由.get("/api/幂等/账册")
+def api_幂等账册():
+    return {"形态标记": 幂等.形态(), "行": 幂等.账册列表()}
+
+@路由.get("/api/幂等/拒收史")
+def api_幂等拒收史():
+    return {"形态标记": 幂等.形态(), "行": 幂等.拒收史列表()}
+
+@路由.get("/api/幂等/水位")
+def api_幂等水位():
+    return 幂等.账册水位()
+
 @路由.get("/api/空桩")
 def api_空桩():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1] / "modules"
-    out = []
+    空 = []
+    落实 = []
     if root.is_dir():
         for p in sorted(root.iterdir()):
-            if p.is_dir() and p.name != "__pycache__" and (p / "__init__.py").is_file():
-                out.append(p.name)
-    return {"空桩": out, "条数": len(out)}
+            if not (p.is_dir() and p.name != "__pycache__" and (p / "__init__.py").is_file()):
+                continue
+            文 = (p / "__init__.py").read_text(encoding="utf-8")
+            # 空桩文件只有模块 docstring + NAME；含实质实现即视为已落实
+            if "空桩" in 文 and len(文.strip().splitlines()) <= 4:
+                空.append(p.name)
+            else:
+                落实.append(p.name)
+    return {"空桩": 空, "条数": len(空), "已落实": 落实}
 

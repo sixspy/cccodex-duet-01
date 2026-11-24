@@ -20,6 +20,7 @@
           <a href="/对齐差.html">对齐差表</a>
           <a href="/悬账单.html">悬账单</a>
           <a href="/对拍结论.html">对拍结论</a>
+          <a href="/幂等.html">幂等账册</a>
           <a href="/源登记.html">源登记</a>
           <a href="/轨规.html" class="亮">轨规</a>
       </nav>
@@ -46,6 +47,29 @@
         </div>
       </section>
 
+      <section class="行卡">
+        <h2>双边幂等键策略</h2>
+        <p class="说明">
+          工程形态二选一，本仓全局只落 <b id="形态名">切流账册</b>：账册钉已入事件编号并拒回刷，
+          二次同号整票拒收、现行不增行、拒因可回读；不做「双写两轨 + 只读归档」，故归档恒 0 行。
+        </p>
+        <div id="水位"></div>
+        <div class="标签行" style="margin-top:10px">
+          <span class="标签">跨左右轨事件编号全局唯一</span>
+          <span class="标签">查重写流水回执同成败（同事务）</span>
+          <span class="标签">并发同号互斥 + 账册主键双保险</span>
+        </div>
+        <div class="表绕" style="margin-top:10px">
+          <table><thead><tr><th>中文状态（拒因）</th><th>触发场景</th></tr></thead>
+          <tbody>
+            <tr><td><span class="徽 红">幂等拒收-同轨二次同号</span></td><td>同事件编号在同一轨二次装载</td></tr>
+            <tr><td><span class="徽 红">幂等拒收-异轨同号</span></td><td>左轨已钉的编号再灌右轨（或反之），另一轨不写入</td></tr>
+            <tr><td><span class="徽 红">幂等拒收-对齐键半边漂</span></td><td>同事件编号携带的业务键与首入不一致</td></tr>
+            <tr><td><span class="徽 绿">已钉</span></td><td>事件编号已入账册、现行流水有效</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
     </main>
   </div>
   <script src="/common.js"></script>
@@ -55,6 +79,9 @@
   document.getElementById("容差").value = s.金额容差分 || 0;
   document.getElementById("站名").value = s.站名 || "对拍";
   document.getElementById("报").textContent = JSON.stringify(s, null, 2);
+  const w = await get("/api/幂等/水位");
+  document.getElementById("形态名").textContent = w.形态标记;
+  document.getElementById("水位").innerHTML = await 幂等水位条();
   document.getElementById("存").onclick = async () => {
     const body = { 金额容差分: document.getElementById("容差").value, 站名: document.getElementById("站名").value };
     document.getElementById("报").textContent = JSON.stringify(await post("/api/轨规", body), null, 2);

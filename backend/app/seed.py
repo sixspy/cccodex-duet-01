@@ -74,8 +74,12 @@ def 此刻() -> str:
 
 
 def 初始化库() -> None:
+    from app.services import 幂等
     conn = 连接()
     conn.executescript(建表)
+    conn.executescript(幂等.账册建表)
+    # 老库升级：现行流水里已有的事件编号补钉进幂等账册
+    幂等.回灌账册(conn)
     if conn.execute("SELECT COUNT(*) AS c FROM 轨规").fetchone()["c"] == 0:
         for k, v in {
             "站名": "对拍",
